@@ -1,11 +1,15 @@
 import fs from 'node:fs/promises';
 import {createBridge} from './bridge.mjs';
+import {runLocalAssistant} from './local-assistant.mjs';
 import {connect} from './cli-connect.mjs';
 const bridge=createBridge();
 const [command,...args]=process.argv.slice(2);
 const show=value=>console.log(JSON.stringify(value));
 try{
- if(command==='connect'){
+ if(command==='assistant'){
+  const controller=new AbortController();for(const event of ['SIGINT','SIGTERM'])process.once(event,()=>controller.abort());
+  await runLocalAssistant({enabled:args.includes('--enable-local-codex'),signal:controller.signal,show});await bridge.close();
+ }else if(command==='connect'){
   process.exitCode=await connect(bridge,show);await bridge.close();
  }else{
   if(command==='status')show(await bridge.call('gold_connection_status'));

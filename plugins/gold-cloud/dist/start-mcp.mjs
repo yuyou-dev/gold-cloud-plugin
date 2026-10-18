@@ -7315,7 +7315,7 @@ var require_content_type = __commonJS({
 var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
-    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.1" });
+    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.2" });
   }
 });
 
