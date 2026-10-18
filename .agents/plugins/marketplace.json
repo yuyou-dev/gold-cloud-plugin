@@ -1,0 +1,1 @@
+{"name":"gold-cloud-marketplace","interface":{"displayName":"Gold Studio 云端插件"},"plugins":[{"name":"gold-cloud","source":{"source":"local","path":"./plugins/gold-cloud"},"policy":{"installation":"AVAILABLE","authentication":"ON_USE"},"category":"Design"}]}
