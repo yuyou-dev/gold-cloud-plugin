@@ -1,3 +1,4 @@
+import {uploadAsset,assetReceipt} from './asset-upload.mjs';
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {createOnboarding} from './onboarding.mjs';
@@ -61,7 +62,15 @@ export function createBridge({onboarding=createOnboarding(),changed=()=>{},now=D
    }
    const client=await connected();
    if(name==='gold_download_export')return result(await createFileBridge(config).download(args));
-   if(name==='gold_asset_put')args=await encodeLocalAsset(args);
+   if(name==='gold_asset_put'){
+    args=await encodeLocalAsset(args);
+    if(JSON.stringify(args).length>8*1024*1024){
+     const {kind,...asset}=args;const saved=await uploadAsset({type:kind,...asset},async(route,body)=>{const response=await boundFetch(config)(config.origin+route,{method:'POST',headers:{...credentialHeaders(config),'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(180000)});const value=await response.json();if(!response.ok)throw Error(value.error?.message||'Upload failed: '+response.status);return value;});
+     const activity=await boundFetch(config)(config.origin+'/api/agent/activity',{method:'POST',headers:{...credentialHeaders(config),'content-type':'application/json'},body:JSON.stringify({tool:'gold_asset_put',message:`登记素材「${saved.name}」(${saved.type})`}),signal:AbortSignal.timeout(30000)});
+     if(!activity.ok)throw Error('素材已登记，活动状态同步失败；请查看素材库确认。');
+     return result(assetReceipt(saved));
+    }
+   }
    return await client.callTool({name,arguments:args},undefined,{timeout:660000});
   }catch(error){return failure(error);}
  }

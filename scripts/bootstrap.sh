@@ -26,12 +26,12 @@ if ! command -v codex >/dev/null 2>&1 && [ -z "${GOLD_CODEX_BIN:-}" ]; then
   GOLD_CODEX_BIN="$base/tools/codex/node_modules/.bin/codex"; export GOLD_CODEX_BIN
 fi
 if ! command -v git >/dev/null 2>&1; then echo '缺少 Git，请让 Codex 从系统官方软件源安装后继续。'; exit 1; fi
-release=https://github.com/yuyou-dev/gold-cloud-plugin/releases/download/v0.1.3
-curl --fail --silent --show-error --location "$release/gold-cloud-0.1.3.tar.gz" -o "$base/downloads/plugin.tar.gz"
-curl --fail --silent --show-error --location "$release/gold-cloud-0.1.3.sha256" -o "$base/downloads/plugin.sha256"
+release=https://github.com/yuyou-dev/gold-cloud-plugin/releases/download/v0.1.4
+curl --fail --silent --show-error --location "$release/gold-cloud-0.1.4.tar.gz" -o "$base/downloads/plugin.tar.gz"
+curl --fail --silent --show-error --location "$release/gold-cloud-0.1.4.sha256" -o "$base/downloads/plugin.sha256"
 expected=$(awk '{print $1}' "$base/downloads/plugin.sha256")
 actual=$(hash_file "$base/downloads/plugin.tar.gz" | awk '{print $1}')
 [ -n "$expected" ] && [ "$expected" = "$actual" ] || { echo '插件下载校验失败，未安装。'; exit 1; }
-mkdir -p "$base/packages/0.1.3"
-tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.3"
-"$node_bin" "$base/packages/0.1.3/scripts/install.mjs"
+mkdir -p "$base/packages/0.1.4"
+tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.4"
+"$node_bin" "$base/packages/0.1.4/scripts/install.mjs"

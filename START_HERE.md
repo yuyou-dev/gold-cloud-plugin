@@ -1,12 +1,12 @@
-# Gold Studio 云端金作工坊：一键连接说明（v0.1.3 beta）
+# Gold Studio 云端金作工坊：一键连接说明（v0.1.4 beta）
 
 用户可以对 Codex 说：“请按这个 START_HERE 安装并连接 Gold Studio，登录授权由我自己完成。”
 
 你正在帮助受邀用户安装云端薄连接器。自动处理安装与配置，只需简短报告“正在安装 → 等待你登录 → 已连接”。不要索要聊天中的密码、令牌或源码路径。用户只负责浏览器登录和授权。
 
-公开安装版本为 v0.1.3，来源 `https://github.com/yuyou-dev/gold-cloud-plugin`。安装与 beta 云端已通过真实官方 OAuth、浏览器配对、MCP 修改/导出和双工作区隔离验收。服务仍属限量 beta；登录或设计服务暂不可用时请如实报告，安装成功不能替代本次连接状态核验。这不是 OpenAI 官方公共插件目录。
+公开安装版本为 v0.1.4，来源 `https://github.com/yuyou-dev/gold-cloud-plugin`。安装与 beta 云端已通过真实官方 OAuth、浏览器配对、MCP 修改/导出和双工作区隔离验收。服务仍属限量 beta；登录或设计服务暂不可用时请如实报告，安装成功不能替代本次连接状态核验。这不是 OpenAI 官方公共插件目录。
 
-1. 使用本机 Codex 桌面与内置浏览器；云端无本机回环浏览器环境不支持此登录方式。从管理员确认的公开 v0.1.3 版本下载 scripts/bootstrap.sh（macOS/Linux）或 bootstrap.ps1（Windows），先阅读再执行，遵循宿主安装规则。脚本安装用户目录中的官方 Node.js、必要时官方 Codex CLI，再下载连接器并核验 SHA-256。无需 Gold 核心、Python、Docker、Blender。
+1. 使用本机 Codex 桌面与内置浏览器；云端无本机回环浏览器环境不支持此登录方式。从管理员确认的公开 v0.1.4 版本下载 scripts/bootstrap.sh（macOS/Linux）或 bootstrap.ps1（Windows），先阅读再执行，遵循宿主安装规则。脚本安装用户目录中的官方 Node.js、必要时官方 Codex CLI，再下载连接器并核验 SHA-256。无需 Gold 核心、Python、Docker、Blender。
 2. 安装器幂等保留已有登录和其他 MCP，同名不同来源连接会报告冲突。缺 Git 时由代理通过系统官方软件源处理，不要求设计师复制技术命令。记录安装器返回的 node/cli 路径，不打开 `.gold-cloud/connection.json`。
 3. 调用 gold_connect；若本聊天未加载新 MCP，用安装器返回 node 执行 cli connect 并保持进程。在内置浏览器打开返回 loginUrl。用户自行登录魔搭，确认官方 OAuth（公开资料与 API-Inference），平台令牌不进入聊天，连接器不调用模型推理。
 4. 回调页提供配对码。打开 https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018 ，用户使用管理员另行提供的临时 Gold 账号密码登录，输入配对码并确认自己的工作区。不代用户同意授权。浏览器直达地址为 https://yuyou80-gold-studio-beta-20261018.ms.show 。
@@ -16,3 +16,5 @@
 凭据仅保存于当前用户私有目录，平台 Authorization 与应用 x-gold-token 独立。登录失效、限流或服务停机时明确报告，不改用管理员平台密钥或本地私有算法。公开包只允许远程代理、登录、下载、安装说明和依赖许可证，不包含任何金作工坊私有几何或业务模型实现。
 
 网页 AI 设计/生图沿用本机 Codex 登录与额度。用户启用本机助手后，由代理使用安装器返回的 CLI 运行 `assistant --enable-local-codex` 并保持进程；关闭进程即停止。不要上传或复制 Codex 凭据。云端任务仅限当前配对工作区，建议先服务器预检再由用户点击应用；未启用助手、内置生图不可用、原产品对等验收尚未完成等情况必须如实报告。
+
+素材导入：v0.1.4 支持自动分块上传，保留单素材 64MiB 上限；云端完成验证后才进入素材库。上传失败请报告原始错误，切勿声称成功或静默降级文件。

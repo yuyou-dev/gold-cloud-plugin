@@ -7315,7 +7315,7 @@ var require_content_type = __commonJS({
 var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
-    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.3" });
+    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.4" });
   }
 });
 
@@ -9491,8 +9491,8 @@ function cleanEnum(obj) {
     return Number.isNaN(Number.parseInt(k, 10));
   }).map((el) => el[1]);
 }
-function base64ToUint8Array(base642) {
-  const binaryString = atob(base642);
+function base64ToUint8Array(base643) {
+  const binaryString = atob(base643);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
@@ -9507,9 +9507,9 @@ function uint8ArrayToBase64(bytes) {
   return btoa(binaryString);
 }
 function base64urlToUint8Array(base64url2) {
-  const base642 = base64url2.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = "=".repeat((4 - base642.length % 4) % 4);
-  return base64ToUint8Array(base642 + padding);
+  const base643 = base64url2.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - base643.length % 4) % 4);
+  return base64ToUint8Array(base643 + padding);
 }
 function uint8ArrayToBase64url(bytes) {
   return uint8ArrayToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -10891,8 +10891,8 @@ var base64urlCharset = /^[A-Za-z0-9_-]*$/;
 function isValidBase64URL(data) {
   if (!base64urlCharset.test(data))
     return false;
-  const base642 = data.replace(/[-_]/g, (c) => c === "-" ? "+" : "/");
-  const padded = base642.padEnd(Math.ceil(base642.length / 4) * 4, "=");
+  const base643 = data.replace(/[-_]/g, (c) => c === "-" ? "+" : "/");
+  const padded = base643.padEnd(Math.ceil(base643.length / 4) * 4, "=");
   return isValidBase64(padded);
 }
 var $ZodBase64URL = /* @__PURE__ */ $constructor("$ZodBase64URL", (inst, def) => {
@@ -18794,6 +18794,33 @@ var StdioServerTransport = class {
   }
 };
 
+// scripts/asset-upload.mjs
+var ASSET_CHUNK_BYTES = 4 * 1024 * 1024;
+var ASSET_JSON_MAX_BYTES = 90 * 1024 * 1024;
+function base642(bytes) {
+  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
+  let text = "";
+  for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode(...bytes.subarray(i, i + 32768));
+  return btoa(text);
+}
+async function uploadAsset(body, request) {
+  const json = JSON.stringify(body), bytes = new TextEncoder().encode(json);
+  if (bytes.length <= 8 * 1024 * 1024) return request("/api/assets", body);
+  if (bytes.length > ASSET_JSON_MAX_BYTES) throw Error("\u7D20\u6750\u8BF7\u6C42\u8D85\u8FC790MiB\uFF1B\u5355\u4E2A\u7D20\u6750\u6700\u591A64MiB");
+  const upload = await request("/api/asset-uploads/start", { bytes: bytes.length });
+  try {
+    for (let offset = 0, index = 0; offset < bytes.length; offset += ASSET_CHUNK_BYTES, index++) await request("/api/asset-uploads/" + upload.id + "/chunk", { index, base64: base642(bytes.subarray(offset, offset + ASSET_CHUNK_BYTES)) });
+    return await request("/api/asset-uploads/" + upload.id + "/complete", {});
+  } catch (error2) {
+    await request("/api/asset-uploads/" + upload.id + "/cancel", {}).catch(() => {
+    });
+    throw error2;
+  }
+}
+function assetReceipt(r) {
+  return { assetId: r.id, name: r.name, type: r.type, usage: r.type === "mesh" ? `{op:'body.set', args:{generator:'mesh', params:{assetId:'${r.id}', scale:1, rotate:[0,0,0]}}}` : r.type === "svg" ? `{kind:'svg', width:8, svg:{assetId:'${r.id}'}}` : `{kind:'image', width:10, image:{assetId:'${r.id}', mode:'height'}, relief:{depth:0.45}} \u6216 body.outline {outline:{shape:'image', assetId:'${r.id}', w:20}}` };
+}
+
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
 var ExperimentalClientTasks = class {
   constructor(_client) {
@@ -21528,7 +21555,21 @@ function createBridge({ onboarding = createOnboarding(), changed = () => {
       }
       const client = await connected();
       if (name === "gold_download_export") return result(await createFileBridge(config2).download(args));
-      if (name === "gold_asset_put") args = await encodeLocalAsset(args);
+      if (name === "gold_asset_put") {
+        args = await encodeLocalAsset(args);
+        if (JSON.stringify(args).length > 8 * 1024 * 1024) {
+          const { kind, ...asset } = args;
+          const saved = await uploadAsset({ type: kind, ...asset }, async (route, body) => {
+            const response = await boundFetch(config2)(config2.origin + route, { method: "POST", headers: { ...credentialHeaders(config2), "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(18e4) });
+            const value = await response.json();
+            if (!response.ok) throw Error(value.error?.message || "Upload failed: " + response.status);
+            return value;
+          });
+          const activity = await boundFetch(config2)(config2.origin + "/api/agent/activity", { method: "POST", headers: { ...credentialHeaders(config2), "content-type": "application/json" }, body: JSON.stringify({ tool: "gold_asset_put", message: `\u767B\u8BB0\u7D20\u6750\u300C${saved.name}\u300D(${saved.type})` }), signal: AbortSignal.timeout(3e4) });
+          if (!activity.ok) throw Error("\u7D20\u6750\u5DF2\u767B\u8BB0\uFF0C\u6D3B\u52A8\u72B6\u6001\u540C\u6B65\u5931\u8D25\uFF1B\u8BF7\u67E5\u770B\u7D20\u6750\u5E93\u786E\u8BA4\u3002");
+          return result(assetReceipt(saved));
+        }
+      }
       return await client.callTool({ name, arguments: args }, void 0, { timeout: 66e4 });
     } catch (error2) {
       return failure2(error2);
