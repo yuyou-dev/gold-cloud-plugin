@@ -13,3 +13,5 @@ description: 连接 Gold Studio 云端金作工坊，通过服务器 MCP 设计�
 渲染只供预览，不替代制造验证。工厂交付以当前修订 validation 与导出检查为准。使用 gold_download_export 根据服务器 artifactId 下载，提供返回的真实本机路径；服务器路径不是用户本机文件。不要发送黑猫品牌素材，不使用本地 Blender 或本地算法绕过云端能力。
 
 网页 AI 助手需要用户启用本机执行：说明会使用当前电脑 Codex 登录与额度后，运行安装器返回的 cli `assistant --enable-local-codex` 并保持进程。关闭进程即可停止。只处理当前已配对工作区的租约任务，不接受云端命令或文件路径；设计建议由服务器预检，用户在原AI页点击应用后才保存。生成图片使用本机Codex内置生图能力；未启用时明确说明，不把不可用算作功能验收通过。
+
+用户指定本机素材时可使用 gold_asset_put(path:绝对路径)，连接器在本机验证并转为内容上传，保留OBJ/STL格式；不要把路径发往远程API。gold_render_batch/gold_render_job完成后返回artifactId供下载；photoreal使用服务端Blender原脚本。resources/prompts同样由远程服务器提供。

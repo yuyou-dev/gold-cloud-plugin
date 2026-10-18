@@ -7315,7 +7315,7 @@ var require_content_type = __commonJS({
 var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
-    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.2" });
+    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.3" });
   }
 });
 
@@ -21210,6 +21210,26 @@ function createFileBridge(config2, requestFetch = fetch) {
     }
   };
 }
+async function encodeLocalAsset(args) {
+  if (!args.path) return args;
+  if (!path2.isAbsolute(args.path) || !["image", "mesh"].includes(args.kind) || args.base64) throw Error("\u8BF7\u9009\u62E9\u660E\u786E\u7684\u672C\u673A\u56FE\u7247\u6216\u6A21\u578B\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u4E0D\u540C\u65F6\u6307\u5B9Abase64");
+  const extension = path2.extname(args.path).toLowerCase();
+  if (!(args.kind === "image" ? [".png", ".jpg", ".jpeg", ".webp"] : [".stl", ".obj"]).includes(extension)) throw Error("\u7D20\u6750\u6587\u4EF6\u7C7B\u578B\u4E0D\u652F\u6301");
+  const file = await fs2.open(args.path, "r");
+  try {
+    const stat = await file.stat();
+    if (!stat.isFile() || stat.size > 64 * 1024 * 1024) throw Error("\u7D20\u6750\u5FC5\u987B\u662F64MiB\u4EE5\u5185\u7684\u666E\u901A\u6587\u4EF6");
+    const bytes = await file.readFile();
+    if (bytes.length > 64 * 1024 * 1024) throw Error("\u7D20\u6750\u8D85\u8FC764MiB");
+    if (args.kind === "image" && !(bytes[0] === 137 && bytes.toString("ascii", 1, 4) === "PNG" || bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255 || bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP")) throw Error("\u6587\u4EF6\u5185\u5BB9\u4E0D\u662FPNG/JPEG/WebP\u56FE\u7247");
+    if (args.kind === "mesh" && extension === ".obj" && !/(^|\n)v\s+[-+.0-9]/.test(bytes.toString("utf8"))) throw Error("OBJ\u7F3A\u5C11\u9876\u70B9");
+    if (args.kind === "mesh" && extension === ".stl" && !(bytes.length >= 84 && 84 + bytes.readUInt32LE(80) * 50 === bytes.length || /^\s*solid\s/.test(bytes.toString("utf8", 0, 200)))) throw Error("STL\u5185\u5BB9\u65E0\u6548");
+    const { path: localPath, ...rest } = args;
+    return { ...rest, base64: bytes.toString("base64"), ...args.kind === "mesh" ? { format: extension.slice(1) } : {} };
+  } finally {
+    await file.close();
+  }
+}
 
 // scripts/cloud-errors.mjs
 function retryDelay(value, attempt = 0, now = Date.now(), random2 = Math.random) {
@@ -21463,7 +21483,7 @@ function createBridge({ onboarding = createOnboarding(), changed = () => {
     if (discovery2?.retryAt > now() || listedAt > now()) return [...localTools, ...remoteTools];
     listPending = (async () => {
       try {
-        const found = (await (await connected()).listTools()).tools.filter((t) => !localTools.some((l) => l.name === t.name));
+        const found = (await (await connected()).listTools()).tools.filter((t) => !localTools.some((l) => l.name === t.name)).map((tool) => tool.name === "gold_asset_put" ? { ...tool, inputSchema: { ...tool.inputSchema, properties: { ...tool.inputSchema.properties, path: { type: "string", description: "\u7528\u6237\u660E\u786E\u9009\u5B9A\u7684\u672C\u673A\u56FE\u7247/\u6A21\u578B\u7EDD\u5BF9\u8DEF\u5F84\uFF1B\u7531\u8FDE\u63A5\u5668\u8F6C\u5B57\u8282\u4E0A\u4F20\uFF0C\u4E0D\u5411\u670D\u52A1\u5668\u53D1\u9001\u8DEF\u5F84" } } } } : tool);
         const notify = discovery2?.state === "unavailable" || JSON.stringify(found) !== JSON.stringify(remoteTools);
         remoteTools = found;
         discovery2 = { state: "available" };
@@ -21508,12 +21528,21 @@ function createBridge({ onboarding = createOnboarding(), changed = () => {
       }
       const client = await connected();
       if (name === "gold_download_export") return result(await createFileBridge(config2).download(args));
-      return await client.callTool({ name, arguments: args });
+      if (name === "gold_asset_put") args = await encodeLocalAsset(args);
+      return await client.callTool({ name, arguments: args }, void 0, { timeout: 66e4 });
     } catch (error2) {
       return failure2(error2);
     }
   }
-  return { list, call, async close() {
+  async function protocol(method, params) {
+    try {
+      const client = await connected();
+      return await client[method](params);
+    } catch (error2) {
+      throw Error(config2 ? remoteError(config2, error2) : "\u8FDE\u63A5\u672A\u5C31\u7EEA");
+    }
+  }
+  return { list, call, listResources: () => protocol("listResources"), readResource: (params) => protocol("readResource", params), listPrompts: () => protocol("listPrompts"), getPrompt: (params) => protocol("getPrompt", params), async close() {
     await onboarding.stop();
     if (remote) await remote.close();
   } };
@@ -21521,10 +21550,14 @@ function createBridge({ onboarding = createOnboarding(), changed = () => {
 
 // scripts/start-mcp.mjs
 init_profile();
-var server = new Server({ name: "gold-cloud", version: profile.version }, { capabilities: { tools: { listChanged: true } } });
+var server = new Server({ name: "gold-cloud", version: profile.version }, { capabilities: { tools: { listChanged: true }, resources: {}, prompts: {} } });
 var bridge = createBridge({ changed: () => server.sendToolListChanged() });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: await bridge.list() }));
 server.setRequestHandler(CallToolRequestSchema, (request) => bridge.call(request.params.name, request.params.arguments));
+server.setRequestHandler(ListResourcesRequestSchema, () => bridge.listResources());
+server.setRequestHandler(ReadResourceRequestSchema, (request) => bridge.readResource(request.params));
+server.setRequestHandler(ListPromptsRequestSchema, () => bridge.listPrompts());
+server.setRequestHandler(GetPromptRequestSchema, (request) => bridge.getPrompt(request.params));
 server.onclose = () => bridge.close();
 await server.connect(new StdioServerTransport());
 /*! Bundled license information:

@@ -77,3 +77,14 @@ export function createFileBridge(config, requestFetch = fetch) {
     }
   };
 }
+
+export async function encodeLocalAsset(args){
+ if(!args.path)return args;
+ if(!path.isAbsolute(args.path)||!['image','mesh'].includes(args.kind)||args.base64)throw Error('请选择明确的本机图片或模型绝对路径，不同时指定base64');
+ const extension=path.extname(args.path).toLowerCase();if(!(args.kind==='image'?['.png','.jpg','.jpeg','.webp']:['.stl','.obj']).includes(extension))throw Error('素材文件类型不支持');
+ const file=await fs.open(args.path,'r');try{const stat=await file.stat();if(!stat.isFile()||stat.size>64*1024*1024)throw Error('素材必须是64MiB以内的普通文件');const bytes=await file.readFile();if(bytes.length>64*1024*1024)throw Error('素材超过64MiB');
+  if(args.kind==='image'&&!((bytes[0]===137&&bytes.toString('ascii',1,4)==='PNG')||(bytes[0]===255&&bytes[1]===216&&bytes[2]===255)||(bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP')))throw Error('文件内容不是PNG/JPEG/WebP图片');
+  if(args.kind==='mesh'&&extension==='.obj'&&!/(^|\n)v\s+[-+.0-9]/.test(bytes.toString('utf8')))throw Error('OBJ缺少顶点');
+  if(args.kind==='mesh'&&extension==='.stl'&&!((bytes.length>=84&&84+bytes.readUInt32LE(80)*50===bytes.length)||/^\s*solid\s/.test(bytes.toString('utf8',0,200))))throw Error('STL内容无效');
+  const {path:localPath,...rest}=args;return {...rest,base64:bytes.toString('base64'),...(args.kind==='mesh'?{format:extension.slice(1)}:{})};}finally{await file.close();}
+}

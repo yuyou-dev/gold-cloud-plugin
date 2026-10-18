@@ -16,7 +16,7 @@ try{
  const listing=JSON.parse(await cli(['mcp','list','--json']));
  const old=listing.find(item=>item.name==='gold_cloud');
  const home=path.resolve(process.env.GOLD_CONNECTOR_HOME||path.join(os.homedir(),'.gold-cloud'));
- const runtime=path.join(home,'runtime','0.1.2');
+ const runtime=path.join(home,'runtime','0.1.3');
  const entry=path.join(runtime,'start-mcp.mjs');
  if(old){const transport=old.transport||old;if(transport.command!==process.execPath||!(transport.args||[]).some(arg=>path.dirname(path.dirname(arg))===path.join(home,'runtime')&&path.basename(arg)==='start-mcp.mjs'))throw Error('已有其他 gold_cloud 连接，未覆盖。请在 Codex 中明确选择保留旧连接或切换到新插件。');}
  say('installing_plugin','正在从 Gold Studio 公开插件市场安装。');
@@ -25,7 +25,7 @@ try{
   if(market.marketplaceSource?.sourceType!=='git'||market.marketplaceSource.source!=='https://github.com/yuyou-dev/gold-cloud-plugin.git')throw Error('已有其他同名插件市场，未覆盖。');
   await cli(['plugin','marketplace','remove','gold-cloud-marketplace','--json']);
  }
- await cli(['plugin','marketplace','add','https://github.com/yuyou-dev/gold-cloud-plugin.git','--ref','v0.1.2','--json']);
+ await cli(['plugin','marketplace','add','https://github.com/yuyou-dev/gold-cloud-plugin.git','--ref','v0.1.3','--json']);
  await cli(['plugin','add','gold-cloud@gold-cloud-marketplace','--json']);
  await fs.mkdir(runtime,{recursive:true,mode:0o700});
  for(const name of ['start-mcp.mjs','cli.mjs','THIRD-PARTY-NOTICES.txt'])await fs.copyFile(path.join(root,'plugins','gold-cloud','dist',name),path.join(runtime,name));

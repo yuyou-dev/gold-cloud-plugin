@@ -1,7 +1,7 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {createOnboarding} from './onboarding.mjs';
-import {credentialHeaders,boundFetch,createFileBridge,remoteError} from './client.mjs';
+import {credentialHeaders,boundFetch,createFileBridge,remoteError,encodeLocalAsset} from './client.mjs';
 import {profile} from './profile.mjs';
 import {createRequestGate} from './cloud-errors.mjs';
 const object={type:'object',properties:{},additionalProperties:false};
@@ -31,7 +31,7 @@ export function createBridge({onboarding=createOnboarding(),changed=()=>{},now=D
   if(discovery?.retryAt>now()||listedAt>now())return [...localTools,...remoteTools];
   listPending=(async()=>{
    try{
-    const found=(await(await connected()).listTools()).tools.filter(t=>!localTools.some(l=>l.name===t.name));
+    const found=(await(await connected()).listTools()).tools.filter(t=>!localTools.some(l=>l.name===t.name)).map(tool=>tool.name==='gold_asset_put'?{...tool,inputSchema:{...tool.inputSchema,properties:{...tool.inputSchema.properties,path:{type:'string',description:'用户明确选定的本机图片/模型绝对路径；由连接器转字节上传，不向服务器发送路径'}}}}:tool);
     const notify=discovery?.state==='unavailable'||JSON.stringify(found)!==JSON.stringify(remoteTools);
     remoteTools=found;discovery={state:'available'};listedAt=now()+30000;
     if(notify)await changed();
@@ -61,8 +61,10 @@ export function createBridge({onboarding=createOnboarding(),changed=()=>{},now=D
    }
    const client=await connected();
    if(name==='gold_download_export')return result(await createFileBridge(config).download(args));
-   return await client.callTool({name,arguments:args});
+   if(name==='gold_asset_put')args=await encodeLocalAsset(args);
+   return await client.callTool({name,arguments:args},undefined,{timeout:660000});
   }catch(error){return failure(error);}
  }
- return {list,call,async close(){await onboarding.stop();if(remote)await remote.close();}};
+ async function protocol(method,params){try{const client=await connected();return await client[method](params);}catch(error){throw Error(config?remoteError(config,error):'连接未就绪');}}
+ return {list,call,listResources:()=>protocol('listResources'),readResource:params=>protocol('readResource',params),listPrompts:()=>protocol('listPrompts'),getPrompt:params=>protocol('getPrompt',params),async close(){await onboarding.stop();if(remote)await remote.close();}};
 }

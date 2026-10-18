@@ -1,11 +1,15 @@
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
-import {ListToolsRequestSchema,CallToolRequestSchema} from '@modelcontextprotocol/sdk/types.js';
+import {ListToolsRequestSchema,CallToolRequestSchema,ListResourcesRequestSchema,ReadResourceRequestSchema,ListPromptsRequestSchema,GetPromptRequestSchema} from '@modelcontextprotocol/sdk/types.js';
 import {createBridge} from './bridge.mjs';
 import {profile} from './profile.mjs';
-const server=new Server({name:'gold-cloud',version:profile.version},{capabilities:{tools:{listChanged:true}}});
+const server=new Server({name:'gold-cloud',version:profile.version},{capabilities:{tools:{listChanged:true},resources:{},prompts:{}}});
 const bridge=createBridge({changed:()=>server.sendToolListChanged()});
 server.setRequestHandler(ListToolsRequestSchema,async()=>({tools:await bridge.list()}));
 server.setRequestHandler(CallToolRequestSchema,request=>bridge.call(request.params.name,request.params.arguments));
+server.setRequestHandler(ListResourcesRequestSchema,()=>bridge.listResources());
+server.setRequestHandler(ReadResourceRequestSchema,request=>bridge.readResource(request.params));
+server.setRequestHandler(ListPromptsRequestSchema,()=>bridge.listPrompts());
+server.setRequestHandler(GetPromptRequestSchema,request=>bridge.getPrompt(request.params));
 server.onclose=()=>bridge.close();
 await server.connect(new StdioServerTransport());
