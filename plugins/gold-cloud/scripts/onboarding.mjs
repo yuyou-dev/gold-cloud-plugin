@@ -33,7 +33,7 @@ export function createOnboarding({profile=defaultProfile,store=createStore(),pla
         state='checking_platform';
         try{
           phase='login';platform=await login.complete(url.href);phase='access';await setup();
-          return send(200,page('魔搭已登录',`<p>打开工作台，登录你的 Gold Studio 测试账号，然后点击“连接 Codex”。</p><p>本次配对码</p><code>${escape(pending.code.match(/.{1,4}/g).join(' '))}</code><p>配对码十分钟有效。确认连接后回到 Codex 即可开始设计。</p><a href="${profile.communityUrl}">打开 Gold Studio 工作台</a>`));
+          return send(200,page('魔搭已登录',`<p>打开工作台，登录你的 Gold Studio 测试账号，然后点击“连接 Codex”。</p><p>本次配对码</p><code>${escape(pending.code.match(/.{1,4}/g).join(' '))}</code><p>配对码有效期以服务器为准（通常五分钟），本次到期时间：${escape(new Date(pending.expiresAt).toISOString())}。确认连接后回到 Codex 即可开始设计。</p><a href="${profile.communityUrl}">打开 Gold Studio 工作台</a>`));
         }catch(error){handleFailure(error);return send(state==='retry_wait'?200:400,page(state==='retry_wait'?'正在等待云端恢复':'连接尚未完成',`<p>${escape(message)}</p><p>请回到 Codex 查看连接进度。</p>`));}
       }
       send(404,'页面不存在');

@@ -1,1 +1,13 @@
-{"name":"gold-cloud","version":"0.1.0","description":"连接云端金作工坊，浏览器授权、工作区配对及首饰设计。","author":{"name":"SUVA"},"skills":"./skills/","interface":{"displayName":"Gold Studio 云端金作工坊","shortDescription":"参数化首饰设计与云端交付"}}
+{
+  "name": "gold-cloud",
+  "version": "0.1.1",
+  "description": "连接云端金作工坊，浏览器授权、工作区配对及首饰设计。",
+  "author": {
+    "name": "SUVA"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Gold Studio 云端金作工坊",
+    "shortDescription": "参数化首饰设计与云端交付"
+  }
+}

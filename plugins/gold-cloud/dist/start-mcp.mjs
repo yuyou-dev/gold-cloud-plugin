@@ -7315,7 +7315,7 @@ var require_content_type = __commonJS({
 var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
-    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.0" });
+    profile = Object.freeze({ name: "Gold Studio \u4E91\u7AEF\u91D1\u4F5C\u5DE5\u574A", communityUrl: "https://modelscope.cn/studios/yuyou80/gold-studio-beta-20261018", browserOrigin: "https://yuyou80-gold-studio-beta-20261018.ms.show", apiOrigin: "https://studio-yuyou80-gold-studio-beta-20261018.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.1" });
   }
 });
 
@@ -21306,7 +21306,7 @@ function createOnboarding({ profile: profile2 = profile, store = createStore(), 
           platform = await login.complete(url2.href);
           phase = "access";
           await setup();
-          return send(200, page("\u9B54\u642D\u5DF2\u767B\u5F55", `<p>\u6253\u5F00\u5DE5\u4F5C\u53F0\uFF0C\u767B\u5F55\u4F60\u7684 Gold Studio \u6D4B\u8BD5\u8D26\u53F7\uFF0C\u7136\u540E\u70B9\u51FB\u201C\u8FDE\u63A5 Codex\u201D\u3002</p><p>\u672C\u6B21\u914D\u5BF9\u7801</p><code>${escape2(pending.code.match(/.{1,4}/g).join(" "))}</code><p>\u914D\u5BF9\u7801\u5341\u5206\u949F\u6709\u6548\u3002\u786E\u8BA4\u8FDE\u63A5\u540E\u56DE\u5230 Codex \u5373\u53EF\u5F00\u59CB\u8BBE\u8BA1\u3002</p><a href="${profile2.communityUrl}">\u6253\u5F00 Gold Studio \u5DE5\u4F5C\u53F0</a>`));
+          return send(200, page("\u9B54\u642D\u5DF2\u767B\u5F55", `<p>\u6253\u5F00\u5DE5\u4F5C\u53F0\uFF0C\u767B\u5F55\u4F60\u7684 Gold Studio \u6D4B\u8BD5\u8D26\u53F7\uFF0C\u7136\u540E\u70B9\u51FB\u201C\u8FDE\u63A5 Codex\u201D\u3002</p><p>\u672C\u6B21\u914D\u5BF9\u7801</p><code>${escape2(pending.code.match(/.{1,4}/g).join(" "))}</code><p>\u914D\u5BF9\u7801\u6709\u6548\u671F\u4EE5\u670D\u52A1\u5668\u4E3A\u51C6\uFF08\u901A\u5E38\u4E94\u5206\u949F\uFF09\uFF0C\u672C\u6B21\u5230\u671F\u65F6\u95F4\uFF1A${escape2(new Date(pending.expiresAt).toISOString())}\u3002\u786E\u8BA4\u8FDE\u63A5\u540E\u56DE\u5230 Codex \u5373\u53EF\u5F00\u59CB\u8BBE\u8BA1\u3002</p><a href="${profile2.communityUrl}">\u6253\u5F00 Gold Studio \u5DE5\u4F5C\u53F0</a>`));
         } catch (error2) {
           handleFailure(error2);
           return send(state === "retry_wait" ? 200 : 400, page(state === "retry_wait" ? "\u6B63\u5728\u7B49\u5F85\u4E91\u7AEF\u6062\u590D" : "\u8FDE\u63A5\u5C1A\u672A\u5B8C\u6210", `<p>${escape2(message)}</p><p>\u8BF7\u56DE\u5230 Codex \u67E5\u770B\u8FDE\u63A5\u8FDB\u5EA6\u3002</p>`));

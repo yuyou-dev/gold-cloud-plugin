@@ -23,13 +23,13 @@ if (!(Get-Command codex -ErrorAction SilentlyContinue) -and !$env:GOLD_CODEX_BIN
  $env:GOLD_CODEX_BIN = $exe.FullName
 }
 if (!(Get-Command git -ErrorAction SilentlyContinue)) { throw '缺少 Git，请让 Codex 从系统官方软件源安装后继续。' }
-$release = 'https://github.com/yuyou-dev/gold-cloud-plugin/releases/download/v0.1.0'
-Invoke-WebRequest "$release/gold-cloud-0.1.0.tar.gz" -OutFile "$base\downloads\plugin.tar.gz"
-Invoke-WebRequest "$release/gold-cloud-0.1.0.sha256" -OutFile "$base\downloads\plugin.sha256"
+$release = 'https://github.com/yuyou-dev/gold-cloud-plugin/releases/download/v0.1.1'
+Invoke-WebRequest "$release/gold-cloud-0.1.1.tar.gz" -OutFile "$base\downloads\plugin.tar.gz"
+Invoke-WebRequest "$release/gold-cloud-0.1.1.sha256" -OutFile "$base\downloads\plugin.sha256"
 $expected = ((Get-Content "$base\downloads\plugin.sha256") -split '\s+')[0]
 if ((Get-FileHash "$base\downloads\plugin.tar.gz" -Algorithm SHA256).Hash -ne $expected) { throw '插件校验失败，未安装。' }
-New-Item -ItemType Directory -Force -Path "$base\packages\0.1.0" | Out-Null
-& tar -xzf "$base\downloads\plugin.tar.gz" -C "$base\packages\0.1.0"
+New-Item -ItemType Directory -Force -Path "$base\packages\0.1.1" | Out-Null
+& tar -xzf "$base\downloads\plugin.tar.gz" -C "$base\packages\0.1.1"
 if ($LASTEXITCODE -ne 0) { throw '插件解压失败。' }
-& $node "$base\packages\0.1.0\scripts\install.mjs"
+& $node "$base\packages\0.1.1\scripts\install.mjs"
 if ($LASTEXITCODE -ne 0) { throw '插件安装未完成。' }
